@@ -1,0 +1,372 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+
+struct Node{
+    
+    int data;
+    struct Node* left;
+    struct Node* right;
+
+};
+
+Node* TreeNode(int key){
+    
+    Node* temp = new Node;
+    temp -> data = key;
+    temp -> left = NULL;
+    temp -> right = NULL;
+    
+    return temp;
+}
+
+void inorderiterative(Node* tree){
+    
+    if(tree == NULL){
+        return;
+    }
+    Node *curr = tree;
+    while(curr){
+        if(curr -> left == NULL){
+            cout << curr -> data << " ";
+            curr = curr -> right;
+        }
+        else{
+            Node* r = curr -> left;
+            while(r -> right != NULL && r -> right != curr){
+                r = r -> right;
+            }
+            if(r -> right == NULL){
+                r -> right = curr;
+                curr = curr -> left;
+            }
+            else if(r -> right = curr){
+                r -> right = NULL;
+                cout << curr -> data << " ";
+                curr = curr -> right;
+            }
+        }
+    }
+}
+void levelordertraversal(Node* tree){
+    if(!tree){
+        return;
+    }
+    queue<Node*> q;
+    Node* curr = tree;
+    q.push(curr);
+    
+    while(!q.empty()){
+        int count = q.size();
+        while(count--){
+            
+            Node* f = q.front();
+            q.pop();
+            
+            cout << f -> data << " ";
+            
+            if(f -> left){
+                q.push(f -> left);
+            }
+            if(f -> right){
+                q.push(f -> right);
+            }
+        }
+        cout << endl;
+    }
+}
+void reverselevelordertraversal(Node* tree){
+    if(!tree){
+        return;
+    }
+    Node* curr = tree;
+    stack<int> st;
+    queue<Node*> q;
+    
+    q.push(curr);
+    while(!q.empty()){
+        int count = q.size();
+        while(count--){
+            
+            Node* temp = q.front();
+            q.pop();
+            st.push(temp -> data);
+            
+            if(temp -> right){
+                q.push(temp -> right);
+            }
+            if(temp -> left){
+                q.push(temp -> left);
+            }
+        }
+    }
+    while(!st.empty()){
+        
+        cout << st.top() << " ";
+        st.pop();
+    }
+}
+void topview(Node* tree){
+    if(!tree){
+        return;
+    }
+    Node* curr = tree;
+    unordered_map<int, Node*> col;
+    queue<pair<Node*, int>> q;
+    
+    q.push(make_pair(curr, 0));
+    
+    while(!q.empty()){
+        int count = q.size();
+        pair<Node*, int> f = q.front();
+        q.pop();
+        
+        Node* temp = f.first;
+        int level = f.second;
+        
+        if(col.find(level) == col.end()){
+            col[level] = temp; 
+        }
+        
+        if(temp -> left){
+            q.push(make_pair(temp -> left, level -1));
+        }
+        if(temp -> right){
+            
+            q.push(make_pair(temp -> right, level+1));
+        }
+    }
+    vector<pair<int, int>> output;
+    unordered_map<int, Node*> :: iterator it;
+    for(it = col.begin(); it != col.end(); it++){
+        
+        pair<int, int> temp;
+        temp.first = it -> first;
+        temp.second = it -> second -> data;
+        
+        output.push_back(temp);
+    }
+    sort(output.begin(), output.end());
+    for(int i = 0; i < output.size(); i++){
+        cout << output[i].second << " ";
+    }
+}
+//LCA
+int height;
+int param;
+unordered_map<int, int> level;
+unordered_map<int, int> parent;
+unordered_map<int, int> grandparent;
+
+void findheight(Node* curr){
+    if(!curr){
+        height = 0;
+        return;
+    }
+    int ans = 0;
+    queue<Node*> q;
+    q.push(curr);
+    
+    while(!q.empty()){
+        int count = q.size();
+        ans++;
+        while(count --){
+            
+            Node* temp = q.front();
+            q.pop();
+            
+            if(temp -> left){
+                q.push(temp -> left);
+            }
+            if(temp -> right){
+                q.push(temp -> right);
+            }
+        }
+    }
+    height = ans;
+    param = ceil(sqrt(ans));
+    return;
+}
+//levels
+void levelsoftree(Node* tree, int l){
+    if(!tree){
+        return;
+    }
+    level[tree -> data] = l;
+    
+    levelsoftree(tree -> left, l+1);
+
+    levelsoftree(tree -> right, l+1);
+}
+void fillparent(Node* tree, int p){
+    
+    if(!tree){
+        return;
+    }
+    parent[tree -> data] = p;
+    fillparent(tree -> left, tree -> data);
+    fillparent(tree -> right, tree -> data);
+}
+void fillgrandparent(Node* tree){
+    
+    queue<Node*> pending;
+    pending.push(tree);
+    grandparent[tree -> data] = -1;
+    while(!pending.empty()){
+        int count = pending.size();
+        while(count --){
+            
+            Node* temp = pending.front();
+            pending.pop();
+            
+            if(temp -> left){
+                if(level[temp -> left -> data]%param != 0){
+                    grandparent[temp -> left -> data] = grandparent[temp -> data];
+                }
+                else{
+                    grandparent[temp -> left -> data] = temp -> data;
+                }
+                pending.push(temp -> left);
+            }
+            if(temp -> right){
+                if(level[temp -> right -> data]%param != 0){
+                    grandparent[temp -> right -> data] = grandparent[temp -> data];
+                }
+                else{
+                    grandparent[temp -> right -> data] = temp -> data;
+                }
+                pending.push(temp -> right);
+            }
+        }
+    }
+}
+//lca main func
+int LCA(Node* tree, int a, int b){
+   // return 0;
+    
+    if(a == b){
+        return a;
+    }
+    if(!tree){
+        return 0;
+    }
+    findheight(tree);
+    levelsoftree(tree, 0);
+    fillparent(tree, -1);
+    fillgrandparent(tree);
+    
+    if(parent[a] == b){
+        return b;
+    }
+    if(parent[b] == a){
+        return a;
+    }
+    
+    int box1 = level[a]/param;
+    int box2 = level[b]/param;
+    
+    int diffofbox = abs(box1 - box2);
+    int boxtoshift;
+    if(box1 > box2){
+        boxtoshift = a;
+    }
+    else{
+        boxtoshift = b;
+    }
+    int t = 0;
+    while(t != diffofbox){
+        grandparent[boxtoshift] = grandparent[grandparent[boxtoshift]];
+        t++;
+    }
+    int l1 = level[a];
+    int l2 = level[b];
+    
+    int diffoflev = abs(l1 - l2);
+    int levtoshift;
+    if(l1 > l2){
+        levtoshift = a;
+    }
+    else{
+        levtoshift = b;
+    }
+    t = 0;
+    while(t != diffoflev){
+        parent[levtoshift] = parent[parent[levtoshift]];
+        t++;
+    }
+    while(grandparent[a]!= grandparent[b]){
+        grandparent[a] = grandparent[grandparent[a]];
+        grandparent[b] = grandparent[grandparent[b]];
+    }
+    while(parent[a] != parent[b]){
+        parent[a] = parent[parent[a]];
+        parent[b] = parent[parent[b]];
+    }
+    return parent[a];
+}
+int main()
+{
+   Node *tree = TreeNode(1);
+   tree -> left = TreeNode(2);
+   tree -> right = TreeNode(3);
+   tree -> left -> left = TreeNode(4);
+   tree -> left -> right = TreeNode(6);
+   tree -> right -> left = TreeNode(7);
+   tree -> right -> right = TreeNode(9);
+   tree -> left -> left -> left = TreeNode(5);
+   tree -> left -> left -> left -> right = TreeNode(12);
+   tree -> left -> left -> left -> right -> right = TreeNode(13);
+   tree -> left -> left -> left -> right -> right -> right = TreeNode(15);
+   tree -> left -> left -> left -> right -> right -> right -> right = TreeNode(16);
+   tree -> right -> left -> left = TreeNode(8);
+   tree -> right -> right -> right = TreeNode(10);
+   tree -> right -> right -> right -> left = TreeNode(11);
+   tree -> right -> right -> right -> left -> left = TreeNode(14);
+   tree -> right -> right -> right -> left -> right = TreeNode(18); 
+   tree -> right -> right -> right -> left -> left -> right = TreeNode(17);
+   
+   
+   //inorder iterative
+   cout << "inorder iterative" << endl;
+   inorderiterative(tree);
+   cout << endl;
+   
+   cout << " ______________" << endl;
+   
+   //levelorder
+   cout <<  "levelorder traversal" << endl;
+   levelordertraversal(tree);
+   
+   cout << endl;
+   
+   cout <<"________________" << endl;
+   
+   //reverse level inorder
+   cout << "Reverse Levelorder Traversal" << endl;
+   
+   reverselevelordertraversal(tree);
+   
+   cout << endl;
+   cout << "__________________" << endl;
+   
+    //top view
+   cout << "TOP VIEW" << endl;
+   
+   topview(tree);
+   
+   cout << endl;
+   cout << "__________________" << endl;
+   
+   //LCA
+   cout << "Enter the nodes for LCA" << endl;
+   int a, b;
+   cin >> a;
+   cin >> b;
+   cout << "LCA of " << a << " and " << b << "is:" << endl;
+   
+   cout << LCA(tree, a, b);
+   
+   cout << endl;
+   cout << "__________________" << endl;
+   return 0;
+}
